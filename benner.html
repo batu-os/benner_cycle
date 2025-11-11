@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Benner Cycle Tester</title>
+<style>
+:root{
+  --bg:#0a0e14;
+  --card:#111827;
+  --card-hover:#1a1f2e;
+  --muted:#9ca3af;
+  --text:#e5e7eb;
+  --text-bright:#f9fafb;
+  --line:#1f2937;
+  --grad1:#06b6d4;
+  --grad2:#0ea5e9;
+  --green:#10b981;
+  --green-dark:#059669;
+  --red:#ef4444;
+  --red-dark:#dc2626;
+  --orange:#f59e0b;
+  --orange-dark:#d97706;
+  --yellow:#eab308;
+}
+
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;-webkit-font-smoothing:antialiased;}
+
+header{padding:16px;text-align:center;background:var(--card);border-bottom:1px solid var(--line);position:relative;}
+h1{margin:0;font-size:24px;font-weight:600;color:var(--text-bright);}
+
+.lang-switch{position:absolute;top:16px;right:16px;display:flex;gap:8px;}
+.lang-btn{background:transparent;border:1px solid var(--line);color:var(--text);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s ease;}
+.lang-btn:hover{border-color:var(--grad1);color:var(--grad1);}
+.lang-btn.active{background:var(--grad1);border-color:var(--grad1);color:#fff;}
+
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px;}
+
+.section{margin-bottom:20px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.2);transition:all 0.3s ease;}
+.card:hover{border-color:var(--grad1);box-shadow:0 8px 12px -2px rgba(6,182,212,0.15);}
+
+h2{margin:0 0 16px;font-size:18px;font-weight:600;color:var(--text-bright);text-align:center;padding-bottom:12px;position:relative;}
+h2::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:20%;height:2px;background:var(--grad1);}
+
+/* Benner Cycle Info */
+.cycle-info{background:#0d1117;padding:16px;border-radius:8px;border:1px solid var(--line);text-align:center;}
+.cycle-info img{max-width:100%;border-radius:8px;border:1px solid var(--line);margin:12px auto;display:block;}
+.cycle-info p{margin:12px 0 0;text-align:left;}
+
+/* Author Section */
+.author-box{padding:20px;border-radius:10px;border:0px solid var(--line);text-align:center;position:relative;overflow:hidden;}
+.author-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.author-text{font-size:15px;line-height:1.8;color:var(--text-bright);margin:0 0 16px;font-weight:500;}
+.author-link{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--grad1);color:var(--grad1);padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;transition:all 0.3s ease;}
+.author-link:hover{background:var(--grad1);color:#fff;transform:translateY(-2px);box-shadow:0 4px 12px rgba(6,182,212,0.3);}
+.author-link svg{width:20px;height:20px;fill:currentColor;}
+
+/* Parameters */
+.param-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px;}
+.param-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+select,button{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:#0d1117;color:var(--text);font-size:13px;transition:all 0.2s ease;}
+select:focus{outline:none;border-color:var(--grad1);box-shadow:0 0 0 3px rgba(6,182,212,0.1);}
+select:hover{border-color:var(--grad2);}
+
+.calc-btn{background:var(--grad1);border:0;color:#fff;font-weight:600;cursor:pointer;margin-top:8px;}
+.calc-btn:hover{background:var(--grad2);}
+
+/* Results */
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+.kpi{background:linear-gradient(135deg,#0d1117 0%,#1a1f2e 100%);border:1px solid var(--line);border-radius:10px;padding:16px;position:relative;overflow:hidden;transition:all 0.3s ease;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--grad1),transparent);opacity:0;transition:opacity 0.3s ease;}
+.kpi:hover{transform:translateY(-4px);box-shadow:0 8px 16px rgba(0,0,0,0.3);}
+.kpi:hover::before{opacity:1;}
+.kpi-header{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:6px;}
+.kpi-value{font-size:24px;font-weight:800;color:var(--text-bright);margin-bottom:4px;}
+.kpi-change{font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;margin-top:4px;}
+.kpi-icon{font-size:16px;}
+
+/* Dynamic colors */
+.kpi.positive{border-left:3px solid var(--green);}
+.kpi.positive .kpi-change{background:rgba(16,185,129,0.15);color:var(--green);}
+.kpi.negative{border-left:3px solid var(--red);}
+.kpi.negative .kpi-change{background:rgba(239,68,68,0.15);color:var(--red);}
+.kpi.neutral{border-left:3px solid var(--orange);}
+.kpi.neutral .kpi-change{background:rgba(245,158,11,0.15);color:var(--orange);}
+
+.meta{font-size:12px;color:var(--muted);margin-top:12px;padding:12px;background:#0d1117;border-radius:6px;text-align:center;}
+
+/* Trades section */
+.trades-header{display:flex;gap:12px;justify-content:center;margin-bottom:20px;}
+.trade-btn{background:transparent;border:1px solid var(--line);color:var(--text);padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s ease;}
+.trade-btn:hover{border-color:var(--grad1);color:var(--grad1);}
+.trade-btn.active{background:var(--grad1);border-color:var(--grad1);color:#fff;}
+
+.trades-list{display:grid;gap:16px;}
+.trade-card{background:#0d1117;border:1px solid var(--line);border-radius:10px;padding:16px;transition:all 0.3s ease;}
+.trade-card:hover{border-color:var(--grad2);box-shadow:0 4px 8px rgba(0,0,0,0.2);}
+.trade-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+.trade-item{display:flex;flex-direction:column;gap:4px;}
+.trade-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.trade-value{font-size:14px;font-weight:600;color:var(--text-bright);}
+.trade-value.positive{color:var(--green);}
+.trade-value.negative{color:var(--red);}
+.trade-value.neutral{color:var(--orange);}
+
+/* Info section */
+.info-grid{display:grid;gap:12px;}
+.info-item{background:#0d1117;padding:12px 16px;border-radius:8px;border-left:3px solid var(--grad2);}
+.info-item strong{color:var(--text-bright);font-weight:600;}
+.info-item p{margin:4px 0 0;color:var(--muted);font-size:13px;}
+
+/* Responsive */
+@media(max-width:768px){
+  h1{font-size:22px;}
+  .param-grid{grid-template-columns:1fr;}
+  .results-grid{grid-template-columns:1fr;}
+  .kpi-value{font-size:20px;}
+  .lang-switch{top:auto;bottom:16px;}
+  .trade-grid{grid-template-columns:1fr;}
+  .trades-header{flex-direction:column;}
+}
+
+/* Loading state */
+.loading .kpi-value{opacity:0.5;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.5;}50%{opacity:1;}}
+</style>
+</head>
+<body>
+<header>
+  <h1 data-tr="title">Benner Cycle Tester</h1>
+  <div class="lang-switch">
+    <button class="lang-btn active" data-lang="tr" onclick="setLang('tr')">TR</button>
+    <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="section">
+    <div class="card">
+      <h2 data-tr="about_title">Benner Cycle Hakkında</h2>
+      <div class="cycle-info">
+        <img src="image.png" alt="Benner Cycle Table">
+        <p data-tr="about_desc">Benner Cycle, 1800'lü yıllarda Samuel Benner tarafından geliştirilen ve ekonomik döngülerin tekrarladığını öngören bir hipotezdir. Bu test aracı, tarihsel verilere dayanarak "risk-on" (büyüme) ve "risk-off" (güvenli liman) dönemlerinde farklı varlık sınıflarının performansını karşılaştırmanıza olanak tanır.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="card">
+      <h2 data-tr="params_title">Parametreler</h2>
+      <div class="param-grid">
+        <div class="param-group">
+          <label data-tr="start_balance">💰 Başlangıç Bakiye</label>
+          <select id="startBalance">
+            <option value="10000" selected>$10,000</option>
+            <option value="25000">$25,000</option>
+            <option value="50000">$50,000</option>
+            <option value="100000">$100,000</option>
+            <option value="1000000">$1,000,000</option>
+          </select>
+        </div>
+        <div class="param-group">
+          <label data-tr="regime_change">🔄 Rejim Değiştirme</label>
+          <select id="regimeChange">
+            <option value="begin" selected data-tr-opt="year_begin">Yılbaşı</option>
+            <option value="mid" data-tr-opt="year_mid">Yıl Ortası</option>
+            <option value="end" data-tr-opt="year_end">Yılsonu</option>
+          </select>
+        </div>
+        <div class="param-group">
+          <label data-tr="start_year">📅 Başlangıç Yılı</label>
+          <select id="startYear">
+            <option value="1999" selected>1999</option>
+            <option value="2005">2005</option>
+            <option value="2007">2007</option>
+            <option value="2012">2012</option>
+            <option value="2019">2019</option>
+            <option value="2023">2023</option>
+          </select>
+        </div>
+        <div class="param-group">
+          <label data-tr="end_year">📅 Bitiş Yılı</label>
+          <select id="endYear"></select>
+        </div>
+        <div class="param-group">
+          <label data-tr="risk_on_asset">📈 Risk-On Varlık</label>
+          <select id="riskOn"></select>
+        </div>
+        <div class="param-group">
+          <label data-tr="risk_off_asset">🛡️ Risk-Off Varlık</label>
+          <select id="riskOff"></select>
+        </div>
+      </div>
+      <button class="calc-btn" id="runBtn" data-tr="calculate">Hesapla</button>
+    </div>
+  </section>
+  <section class="section">
+
+      <div class="author-box">
+        <p class="author-text" data-tr="author_text1">Piyasalar rastgele değil.</p>
+        <p class="author-text" data-tr="author_text2">Verinin anlattığı hikâyeleri paylaşıyorum.</p>
+        <a href="https://x.com/batudotpy" target="_blank" rel="noopener noreferrer" class="author-link">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          <span data-tr="author_link">Contact & Stay Tuned</span>
+        </a>
+      </div>
+
+  </section>
+
+  <section class="section">
+    <div class="card">
+      <h2 data-tr="results_title">Sonuçlar</h2>
+      <div class="results-grid">
+        <div class="kpi" id="benner-card">
+          <div class="kpi-header" data-tr="benner_strategy">🎯 Benner Strategy</div>
+          <div class="kpi-value" id="benner">$-</div>
+          <div class="kpi-change" id="benner-change"></div>
+        </div>
+        <div class="kpi" id="inverse-card">
+          <div class="kpi-header" data-tr="benner_reverse">🔄 Benner Reverse</div>
+          <div class="kpi-value" id="inverse">$-</div>
+          <div class="kpi-change" id="inverse-change"></div>
+        </div>
+        <div class="kpi" id="holdOn-card">
+          <div class="kpi-header" data-tr="buy_hold_on">📈 Buy & Hold Risk-On</div>
+          <div class="kpi-value" id="holdOn">$-</div>
+          <div class="kpi-change" id="holdOn-change"></div>
+        </div>
+        <div class="kpi" id="holdOff-card">
+          <div class="kpi-header" data-tr="buy_hold_off">🛡️ Buy & Hold Risk-Off</div>
+          <div class="kpi-value" id="holdOff">$-</div>
+          <div class="kpi-change" id="holdOff-change"></div>
+        </div>
+      </div>
+      <div class="meta" id="meta"></div>
+    </div>
+  </section>
+
+  <section class="section" id="trades-section" style="display:none;">
+    <div class="card">
+      <h2 data-tr="trades_title">Ticaretler</h2>
+      <div class="trades-header">
+        <button class="trade-btn active" data-strategy="benner" onclick="switchStrategy('benner')" data-tr="benner_strategy">🎯 Benner Strategy</button>
+        <button class="trade-btn" data-strategy="inverse" onclick="switchStrategy('inverse')" data-tr="benner_reverse">🔄 Benner Reverse</button>
+      </div>
+      <div id="trades-list" class="trades-list"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="card">
+      <h2 data-tr="strategies_title">Stratejiler Hakkında</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong data-tr="benner_strategy">🎯 Benner Strategy</strong>
+          <p data-tr="benner_strategy_desc">Benner döngüsüne göre "iyi" zamanlarda risk-on varlıklara, "kötü" zamanlarda risk-off varlıklara geçiş yapan aktif strateji.</p>
+        </div>
+        <div class="info-item">
+          <strong data-tr="benner_reverse">🔄 Benner Reverse</strong>
+          <p data-tr="benner_reverse_desc">Benner stratejisinin tersi: "iyi" zamanlarda risk-off, "kötü" zamanlarda risk-on. Kontrol grubu olarak kullanılır.</p>
+        </div>
+        <div class="info-item">
+          <strong data-tr="risk_on_title">📈 Risk-On</strong>
+          <p data-tr="risk_on_desc">Ekonomik büyüme dönemlerinde tercih edilen yüksek getirili varlıklar: hisse senedi endeksleri, emerging markets, riskli emtialar.</p>
+        </div>
+        <div class="info-item">
+          <strong data-tr="risk_off_title">🛡️ Risk-Off</strong>
+          <p data-tr="risk_off_desc">Belirsizlik ve volatilite dönemlerinde güvenli liman olarak görülen varlıklar: altın, ABD doları.</p>
+        </div>
+        <div class="info-item">
+          <strong data-tr="test_logic">📊 Test Mantığı</strong>
+          <p data-tr="test_logic_desc">Benner hipotezi, zamanlama stratejisinin uzun vadede sürekli aynı varlıkta kalmaya göre daha yüksek getiri sağladığını öne sürer. Sonuçlar tarihi verilere dayanır ve gelecek performans garantisi vermez.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const TRANSLATIONS={
+  tr:{
+    title:"Benner Cycle Tester",
+    about_title:"Benner Cycle Hakkında",
+    about_desc:'Benner Cycle, 1800\'lü yıllarda Samuel Benner tarafından geliştirilen ve ekonomik döngülerin tekrarladığını öngören bir hipotezdir. Bu test aracı, tarihsel verilere dayanarak "risk-on" (büyüme) ve "risk-off" (güvenli liman) dönemlerinde farklı varlık sınıflarının performansını karşılaştırmanıza olanak tanır.',
+    author_text1:"Piyasalar rastgele değil.",
+    author_text2:"Verinin anlattığı hikâyeleri paylaşıyorum.",
+    author_link:"Contact & Stay Tuned",
+    params_title:"Parametreler",
+    start_balance:"💰 Başlangıç Bakiye",
+    regime_change:"🔄 Rejim Değiştirme",
+    year_begin:"Yılbaşı",
+    year_mid:"Yıl Ortası",
+    year_end:"Yılsonu",
+    start_year:"📅 Başlangıç Yılı",
+    end_year:"📅 Bitiş Yılı",
+    risk_on_asset:"📈 Risk-On Varlık",
+    risk_off_asset:"🛡️ Risk-Off Varlık",
+    calculate:"Hesapla",
+    results_title:"Sonuçlar",
+    benner_strategy:"🎯 Benner Strategy",
+    benner_reverse:"🔄 Benner Reverse",
+    buy_hold_on:"📈 Buy & Hold Risk-On",
+    buy_hold_off:"🛡️ Buy & Hold Risk-Off",
+    strategies_title:"Stratejiler Hakkında",
+    benner_strategy_desc:'Benner döngüsüne göre "iyi" zamanlarda risk-on varlıklara, "kötü" zamanlarda risk-off varlıklara geçiş yapan aktif strateji.',
+    benner_reverse_desc:'Benner stratejisinin tersi: "iyi" zamanlarda risk-off, "kötü" zamanlarda risk-on. Kontrol grubu olarak kullanılır.',
+    risk_on_title:"📈 Risk-On",
+    risk_on_desc:"Ekonomik büyüme dönemlerinde tercih edilen yüksek getirili varlıklar: hisse senedi endeksleri, emerging markets, riskli emtialar.",
+    risk_off_title:"🛡️ Risk-Off",
+    risk_off_desc:"Belirsizlik ve volatilite dönemlerinde güvenli liman olarak görülen varlıklar: altın, ABD doları.",
+    test_logic:"📊 Test Mantığı",
+    test_logic_desc:"Benner hipotezi, zamanlama stratejisinin uzun vadede sürekli aynı varlıkta kalmaya göre daha yüksek getiri sağladığını öne sürer. Sonuçlar tarihi verilere dayanır ve gelecek performans garantisi vermez.",
+    test:"Test",
+    period:"Dönem",
+    trades_title:"Ticaretler",
+    asset:"Varlık",
+    regime:"Rejim",
+    buy_date:"Alma Tarihi",
+    sell_date:"Satma Tarihi",
+    buy_price:"Alış Fiyatı",
+    sell_price:"Satış Fiyatı",
+    balance:"Bakiye",
+    change:"Değişim",
+    risk_on:"Risk-On",
+    risk_off:"Risk-Off"
+  },
+  en:{
+    title:"Benner Cycle Tester",
+    about_title:"About Benner Cycle",
+    about_desc:'The Benner Cycle is a hypothesis developed by Samuel Benner in the 1800s that predicts repeating economic cycles. This testing tool allows you to compare the performance of different asset classes during "risk-on" (growth) and "risk-off" (safe haven) periods based on historical data.',
+    author_text1:"Markets are not random.",
+    author_text2:"Sharing stories that data tells.",
+    author_link:"Contact & Stay Tuned",
+    params_title:"Parameters",
+    start_balance:"💰 Starting Balance",
+    regime_change:"🔄 Regime Change",
+    year_begin:"Year Begin",
+    year_mid:"Year Mid",
+    year_end:"Year End",
+    start_year:"📅 Start Year",
+    end_year:"📅 End Year",
+    risk_on_asset:"📈 Risk-On Asset",
+    risk_off_asset:"🛡️ Risk-Off Asset",
+    calculate:"Calculate",
+    results_title:"Results",
+    benner_strategy:"🎯 Benner Strategy",
+    benner_reverse:"🔄 Benner Reverse",
+    buy_hold_on:"📈 Buy & Hold Risk-On",
+    buy_hold_off:"🛡️ Buy & Hold Risk-Off",
+    strategies_title:"About Strategies",
+    benner_strategy_desc:'Active strategy that switches to risk-on assets during "good" times and risk-off assets during "bad" times according to the Benner cycle.',
+    benner_reverse_desc:'Opposite of Benner strategy: risk-off during "good" times, risk-on during "bad" times. Used as a control group.',
+    risk_on_title:"📈 Risk-On",
+    risk_on_desc:"High-yield assets preferred during periods of economic growth: stock indices, emerging markets, risky commodities.",
+    risk_off_title:"🛡️ Risk-Off",
+    risk_off_desc:"Assets considered safe havens during periods of uncertainty and volatility: gold, US dollar.",
+    test_logic:"📊 Test Logic",
+    test_logic_desc:"The Benner hypothesis suggests that timing strategies provide higher returns in the long run compared to continuously holding the same asset. Results are based on historical data and do not guarantee future performance.",
+    test:"Test",
+    period:"Period",
+    trades_title:"Trades",
+    asset:"Asset",
+    regime:"Regime",
+    buy_date:"Buy Date",
+    sell_date:"Sell Date",
+    buy_price:"Buy Price",
+    sell_price:"Sell Price",
+    balance:"Balance",
+    change:"Change",
+    risk_on:"Risk-On",
+    risk_off:"Risk-Off"
+  }
+};
+
+const TICKER_NAMES_TR={
+"SPY":"S&P 500 ETF (SPY)",
+"QQQ":"NASDAQ-100 ETF (QQQ)",
+"EEM":"Gelişen Piyasalar ETF (EEM)",
+"IWM":"Russell 2000 ETF (IWM)",
+"SPXL":"S&P 500 3x ETF (SPXL)",
+"TQQQ":"NASDAQ-100 3x ETF (TQQQ)",
+"GC=F":"Altın (GC=F)",
+"USD":"ABD Doları (USD)"
+};
+
+const TICKER_NAMES_EN={
+"SPY":"S&P 500 ETF (SPY)",
+"QQQ":"NASDAQ-100 ETF (QQQ)",
+"EEM":"Emerging Markets ETF (EEM)",
+"IWM":"Russell 2000 ETF (IWM)",
+"SPXL":"S&P 500 3x ETF (SPXL)",
+"TQQQ":"NASDAQ-100 3x ETF (TQQQ)",
+"GC=F":"Gold (GC=F)",
+"USD":"US Dollar (USD)"
+};
+
+function getTickerNames(){
+  return currentLang==='tr'?TICKER_NAMES_TR:TICKER_NAMES_EN;
+}
+
+let currentLang='tr';
+
+function setLang(lang){
+  currentLang=lang;
+  document.querySelectorAll('[data-tr]').forEach(el=>{
+    const key=el.getAttribute('data-tr');
+    if(TRANSLATIONS[lang]&&TRANSLATIONS[lang][key]){
+      if(el.tagName==='INPUT'||el.tagName==='BUTTON'){
+        el.textContent=TRANSLATIONS[lang][key];
+      }else{
+        el.textContent=TRANSLATIONS[lang][key];
+      }
+    }
+  });
+  document.querySelectorAll('[data-tr-opt]').forEach(el=>{
+    const key=el.getAttribute('data-tr-opt');
+    if(TRANSLATIONS[lang]&&TRANSLATIONS[lang][key]){
+      el.textContent=TRANSLATIONS[lang][key];
+    }
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.getAttribute('data-lang')===lang);
+  });
+  rebuildEnd();
+  rebuildAssets();
+  if(el.meta.textContent){
+    compute();
+  }
+}
+
+const DATA_BEGIN={
+    "risk_on": {
+        "SPY": {
+            "1999_2005": {"period": "off","start_price": 77.11898270307002,"end_price": 82.70438154479652},
+            "2005_2007": {"period": "on","start_price": 82.70437369587006,"end_price": 100.30917114257814},
+            "2007_2012": {"period": "off","start_price": 100.30914849322775,"end_price": 100.08136372129164},
+            "2012_2019": {"period": "on","start_price": 100.08139341155685,"end_price": 221.87181389755256},
+            "2019_2023": {"period": "off","start_price": 221.87182780247966,"end_price": 370.5734029604506},
+            "2023_2100": {"period": "on","start_price": 370.5733163876227,"end_price": 681.4499829101562}
+        },
+        "QQQ": {
+            "1999_2005": {"period": "off","start_price": 51.1349214907168306,"end_price": 34.24274902860919},
+            "2005_2007": {"period": "on","start_price": 34.24273471686515,"end_price": 37.363305488173395},
+            "2007_2012": {"period": "off","start_price": 37.36330925006904,"end_price": 50.44977832806007},
+            "2012_2019": {"period": "on","start_price": 50.449774741500924,"end_price": 144.69073916127724},
+            "2019_2023": {"period": "off","start_price": 144.69078026364275,"end_price": 264.2320115224538},
+            "2023_2100": {"period": "on","start_price": 264.2320115224538,"end_price": 623.22998046875}
+        },
+        "EEM": {
+            "1999_2005": {"period": "off","start_price": null,"end_price": 14.915278322757533},
+            "2005_2007": {"period": "on","start_price": 14.915276406669163,"end_price": 26.39141899350348},
+            "2007_2012": {"period": "off","start_price": 26.391417057786438,"end_price": 29.081452721126986},
+            "2012_2019": {"period": "on","start_price": 29.081463314589023,"end_price": 33.303988566869386},
+            "2019_2023": {"period": "off","start_price": 33.303985151343326,"end_price": 36.1143989360134},
+            "2023_2100": {"period": "on","start_price": 36.1143989360134,"end_price": 55.5099983215332}
+        },
+        "IWM": {
+            "1999_2005": {"period": "off","start_price": null,"end_price": 49.33502017366281},
+            "2005_2007": {"period": "on","start_price": 49.335032165826085,"end_price": 61.13590764521693},
+            "2007_2012": {"period": "off","start_price": 61.135922775167174,"end_price": 62.719859923027826},
+            "2012_2019": {"period": "on","start_price": 62.71986722994512,"end_price": 121.32403881917854},
+            "2019_2023": {"period": "off","start_price": 121.32405234899308,"end_price": 169.99440388365258},
+            "2023_2100": {"period": "on","start_price": 169.99441790328234,"end_price": 244.02999877929688}
+        },
+        "SPXL": {
+            "1999_2005": {"period": "off", "start_price": null, "end_price": null},
+            "2005_2007": {"period": "on",  "start_price": null, "end_price": null},
+            "2007_2012": {"period": "off", "start_price": null, "end_price": 4.858366723961974},
+            "2012_2019": {"period": "on",  "start_price": 4.8583671606760435, "end_price": 29.91954103225413},
+            "2019_2023": {"period": "off", "start_price": 29.919535175571806, "end_price": 61.238660706424525},
+            "2023_2100": {"period": "on",  "start_price": 61.23865415937554, "end_price": 222.66000366210938}
+            },
+
+        "TQQQ": {
+            "1999_2005": {"period": "off", "start_price": null, "end_price": null},
+            "2005_2007": {"period": "on",  "start_price": null, "end_price": null},
+            "2007_2012": {"period": "off", "start_price": null, "end_price": 0.715066692263594},
+            "2012_2019": {"period": "on",  "start_price": 0.715066692263594, "end_price": 8.325635800668067},
+            "2019_2023": {"period": "off", "start_price": 8.325637211805812, "end_price": 17.086801381485493},
+            "2023_2100": {"period": "on",  "start_price": 17.08680285841105, "end_price": 112.70999908447266}
+        }
+
+    },
+    "risk_off": {
+        "GC=F": {
+            "1999_2005": {"period": "off","start_price": 288.000,"end_price": 431.0},
+            "2005_2007": {"period": "on","start_price": 431.0,"end_price": 635.2000122070312},
+            "2007_2012": {"period": "off","start_price": 635.2000122070312,"end_price": 1747.0},
+            "2012_2019": {"period": "on","start_price": 1747.0,"end_price": 1286.0},
+            "2019_2023": {"period": "off","start_price": 1286.0,"end_price": 1768.699951171875},
+            "2023_2100": {"period": "on","start_price": 1768.699951171875,"end_price": 4149.60009765625}
+        }
+    }
+};
+
+const DATA_MID={
+    "risk_on": {
+        "SPY": {
+            "1999_2005": {"period": "off","start_price": 81.53553525548782,"end_price": 81.63583819809625},
+            "2005_2007": {"period": "on","start_price": 81.63583819809625,"end_price": 108.940626079964},
+            "2007_2012": {"period": "off","start_price": 108.94061047122473,"end_price": 101.81816212990994},
+            "2012_2019": {"period": "on","start_price": 101.8181476211674,"end_price": 249.420972231108},
+            "2019_2023": {"period": "off","start_price": 249.42105825630625,"end_price": 404.62136321625417},
+            "2023_2100": {"period": "on","start_price": 404.62136321625417,"end_price": 681.4499829101562}
+        },
+        "QQQ": {
+            "1999_2005": {"period": "off","start_price": 43.924214907168306,"end_price": 32.48319537505135},
+            "2005_2007": {"period": "on","start_price": 32.483189458536785,"end_price": 40.93111237979824},
+            "2007_2012": {"period": "off","start_price": 40.931116192892965,"end_price": 54.114004710675246},
+            "2012_2019": {"period": "on","start_price": 54.11399746417796,"end_price": 166.54507286843716},
+            "2019_2023": {"period": "off","start_price": 166.54505869314218,"end_price": 342.54107238995846},
+            "2023_2100": {"period": "on","start_price": 342.54107238995846,"end_price": 623.22998046875}
+        },
+        "EEM": {
+            "1999_2005": {"period": "off","start_price": null,"end_price": 15.23325521966411},
+            "2005_2007": {"period": "on","start_price": 15.233254305060239,"end_price": 29.064692360232232},
+            "2007_2012": {"period": "off","start_price": 29.064683104599833,"end_price": 27.55203587603937},
+            "2012_2019": {"period": "on","start_price": 27.552037676151397,"end_price": 35.42702176453722},
+            "2019_2023": {"period": "off","start_price": 35.42701811519394,"end_price": 36.02961961413895},
+            "2023_2100": {"period": "on","start_price": 36.029623302515226,"end_price": 55.5099983215332}
+        },
+        "IWM": {
+            "1999_2005": {"period": "off","start_price": null,"end_price": 46.698543891134236},
+            "2005_2007": {"period": "on","start_price": 46.698529197663085,"end_price": 65.8155265119294},
+            "2007_2012": {"period": "off","start_price": 65.8155342922552,"end_price": 61.84805379735024},
+            "2012_2019": {"period": "on","start_price": 61.84808233566005,"end_price": 134.4960705074227},
+            "2019_2023": {"period": "off","start_price": 134.4960561680856,"end_price": 168.6141231855107},
+            "2023_2100": {"period": "on","start_price": 168.61413735165058,"end_price": 244.02999877929688}
+        },
+        "SPXL": {
+            "1999_2005": {"period": "off", "start_price": null, "end_price": null},
+            "2005_2007": {"period": "on",  "start_price": null, "end_price": null},
+            "2007_2012": {"period": "off", "start_price": null, "end_price": 4.9912131624519995},
+            "2012_2019": {"period": "on",  "start_price": 4.991213985664437, "end_price": 40.55187048027314},
+            "2019_2023": {"period": "off", "start_price": 40.55186417320764, "end_price": 74.01830294918288},
+            "2023_2100": {"period": "on",  "start_price": 74.01830938303945, "end_price": 222.66000366210938}
+            },
+
+        "TQQQ": {
+            "1999_2005": {"period": "off", "start_price": null, "end_price": null},
+            "2005_2007": {"period": "on",  "start_price": null, "end_price": null},
+            "2007_2012": {"period": "off", "start_price": null, "end_price": 0.859832029458329},
+            "2012_2019": {"period": "on",  "start_price": 0.8598318750347227, "end_price": 11.930143641640782},
+            "2019_2023": {"period": "off", "start_price": 11.930143641640782, "end_price": 33.655924877730016},
+            "2023_2100": {"period": "on",  "start_price": 33.655924877730016, "end_price": 112.70999908447266}
+        }
+    },
+    "risk_off": {
+        "GC=F": {
+            "1999_2005": {"period": "off","start_price": 270.01,"end_price": 416.3999938964844},
+            "2005_2007": {"period": "on","start_price": 416.3999938964844,"end_price": 661.5},
+            "2007_2012": {"period": "off","start_price": 661.5,"end_price": 1560.0},
+            "2012_2019": {"period": "on","start_price": 1560.0,"end_price": 1307.0},
+            "2019_2023": {"period": "off","start_price": 1307.0,"end_price": 1963.199951171875},
+            "2023_2100": {"period": "on","start_price": 1963.199951171875,"end_price": 4149.60009765625}
+        }
+    }
+};
+
+const DATA_END={
+    "risk_on": {
+        "SPY": {
+            "1999_2005": {"period": "off","start_price": 92.5687484741211,"end_price": 85.75088500976562},
+            "2005_2007": {"period": "on","start_price": 85.75088500976562,"end_price": 104.4498062133789},
+            "2007_2012": {"period": "off","start_price": 104.44984436035156,"end_price": 113.22815704345703},
+            "2012_2019": {"period": "on","start_price": 113.22817993164062,"end_price": 294.36492919921875},
+            "2019_2023": {"period": "off","start_price": 294.3650207519531,"end_price": 463.3353576660156},
+            "2023_2100": {"period": "on","start_price": 463.33526611328125,"end_price": 681.4400024414062}
+        },
+        "QQQ": {
+            "1999_2005": {"period": "off","start_price": 77.27701568603516,"end_price": 34.54798126220703},
+            "2005_2007": {"period": "on","start_price": 34.54798126220703,"end_price": 44.11983871459961},
+            "2007_2012": {"period": "off","start_price": 44.11984634399414,"end_price": 58.13291549682617},
+            "2012_2019": {"period": "on","start_price": 58.13291549682617,"end_price": 204.974609375},
+            "2019_2023": {"period": "off","start_price": 204.97462463378906,"end_price": 404.5470886230469},
+            "2023_2100": {"period": "on","start_price": 404.5470886230469,"end_price": 623.22998046875}
+        },
+        "EEM": {
+            "1999_2005": {"period": "off","start_price": null,"end_price": 19.577688217163086},
+            "2005_2007": {"period": "on","start_price": 19.577678680419922,"end_price": 34.19509506225586},
+            "2007_2012": {"period": "off","start_price": 34.1950798034668,"end_price": 33.48383331298828},
+            "2012_2019": {"period": "on","start_price": 33.483821868896484,"end_price": 39.01901626586914},
+            "2019_2023": {"period": "off","start_price": 39.019012451171875,"end_price": 38.17257308959961},
+            "2023_2100": {"period": "on","start_price": 38.17257308959961,"end_price": 55.5099983215332}
+        },
+        "IWM": {
+            "1999_2005": {"period": "off","start_price": null,"end_price": 51.066200256347656},
+            "2005_2007": {"period": "on","start_price": 51.06620788574219,"end_price": 59.345802307128906},
+            "2007_2012": {"period": "off","start_price": 59.34584426879883,"end_price": 70.71724700927734},
+            "2012_2019": {"period": "on","start_price": 70.71722412109375,"end_price": 153.55581665039062},
+            "2019_2023": {"period": "off","start_price": 153.55577087402344,"end_price": 196.10916137695312},
+            "2023_2100": {"period": "on","start_price": 196.10916137695312,"end_price": 244.02999877929688}
+        },
+        "SPXL": {
+            "1999_2005": {"period": "off", "start_price": null, "end_price": null},
+            "2005_2007": {"period": "on",  "start_price": null, "end_price": null},
+            "2007_2012": {"period": "off", "start_price": null, "end_price": 6.653687953948975},
+            "2012_2019": {"period": "on",  "start_price": 6.6536865234375, "end_price": 63.483238220214844},
+            "2019_2023": {"period": "off", "start_price": 63.48324203491211, "end_price": 101.96404266357422},
+            "2023_2100": {"period": "on",  "start_price": 101.96404266357422, "end_price": 222.66000366210938}
+            },
+
+        "TQQQ": {
+            "1999_2005": {"period": "off", "start_price": null, "end_price": null},
+            "2005_2007": {"period": "on",  "start_price": null, "end_price": null},
+            "2007_2012": {"period": "off", "start_price": null, "end_price": 1.0308831930160522},
+            "2012_2019": {"period": "on",  "start_price": 1.0308831930160522, "end_price": 20.72569465637207},
+            "2019_2023": {"period": "off", "start_price": 20.72568702697754, "end_price": 49.4467887878418},
+            "2023_2100": {"period": "on",  "start_price": 49.44679260253906, "end_price": 112.70999908447266}
+        }
+
+        
+    },
+    "risk_off": {
+        "GC=F": {
+            "1999_2005": {"period": "off","start_price": 288.20001220703125,"end_price": 517.0999755859375},
+            "2005_2007": {"period": "on","start_price": 517.0999755859375,"end_price": 834.9000244140625},
+            "2007_2012": {"period": "off","start_price": 834.9000244140625,"end_price": 1674.800048828125},
+            "2012_2019": {"period": "on","start_price": 1674.800048828125,"end_price": 1465.5999755859375},
+            "2019_2023": {"period": "off","start_price": 1465.5999755859375,"end_price": 2062.39990234375},
+            "2023_2100": {"period": "on","start_price": 2062.39990234375,"end_price": 4149.60009765625}
+        }
+    }
+};
+
+const CHUNKS=[
+{key:"1999_2005",start:"1999",end:"2005"},
+{key:"2005_2007",start:"2005",end:"2007"},
+{key:"2007_2012",start:"2007",end:"2012"},
+{key:"2012_2019",start:"2012",end:"2019"},
+{key:"2019_2023",start:"2019",end:"2023"},
+{key:"2023_2100",start:"2023",end:"11.11.2025"}];
+const ORDER=["1999","2005","2007","2012","2019","2023","11.11.2025"];
+
+const el={
+  sy:document.getElementById("startYear"),
+  ey:document.getElementById("endYear"),
+  on:document.getElementById("riskOn"),
+  off:document.getElementById("riskOff"),
+  bal:document.getElementById("startBalance"),
+  regime:document.getElementById("regimeChange"),
+  ben:document.getElementById("benner"),
+  inv:document.getElementById("inverse"),
+  hon:document.getElementById("holdOn"),
+  hof:document.getElementById("holdOff"),
+  meta:document.getElementById("meta"),
+  benCard:document.getElementById("benner-card"),
+  invCard:document.getElementById("inverse-card"),
+  honCard:document.getElementById("holdOn-card"),
+  hofCard:document.getElementById("holdOff-card"),
+  benChange:document.getElementById("benner-change"),
+  invChange:document.getElementById("inverse-change"),
+  honChange:document.getElementById("holdOn-change"),
+  hofChange:document.getElementById("holdOff-change")
+};
+
+function getDATA(){
+  const regime=el.regime.value;
+  if(regime==='begin')return DATA_BEGIN;
+  if(regime==='mid')return DATA_MID;
+  return DATA_END;
+}
+
+function fmt(x){return "$"+x.toLocaleString(undefined,{maximumFractionDigits:0});}
+
+function getColorClass(pct){
+  if(pct>10)return "positive";
+  if(pct<-10)return "negative";
+  return "neutral";
+}
+
+function getIcon(pct){
+  if(pct>0)return "↗";
+  if(pct<0)return "↘";
+  return "→";
+}
+
+function formatChange(x0,x1){
+  const r=(x1/x0-1)*100;
+  const mult=x1/x0;
+  const icon=getIcon(r);
+  return `<span class="kpi-icon">${icon}</span> ${r>0?"+":""}${r.toFixed(1)}% (${mult.toFixed(2)}x)`;
+}
+
+function updateCard(card,changeEl,value,initial){
+  const pct=(value/initial-1)*100;
+  const colorClass=getColorClass(pct);
+  card.className="kpi "+colorClass;
+  changeEl.innerHTML=formatChange(initial,value);
+}
+
+function rebuildEnd(){
+  const s=el.sy.value;
+  const todayText=currentLang==='tr'?'11.11.2025':'11.11.2025';
+  const opts=["2005","2007","2012","2019","2023","11.11.2025"]
+    .filter(e=>ORDER.indexOf(e)>ORDER.indexOf(s));
+  el.ey.innerHTML=opts.map(x=>`<option value="${x}" ${x==="11.11.2025"?"selected":""}>${x==="11.11.2025"?todayText:x}</option>`).join("");
+}
+
+function chunksBetween(s,e){
+  return CHUNKS.filter(c=>ORDER.indexOf(c.start)>=ORDER.indexOf(s)&&ORDER.indexOf(c.end)<=ORDER.indexOf(e));
+}
+
+function rebuildAssets(){
+  const s=el.sy.value,e=el.ey.value;
+  const DATA=getDATA();
+  const ch=chunksBetween(s,e).map(x=>x.key);
+  const onKeys=Object.keys(DATA.risk_on||{}).filter(t=>ch.every(k=>DATA.risk_on[t][k]?.start_price));
+  const offKeys=["USD"].concat(Object.keys(DATA.risk_off||{}).filter(t=>ch.every(k=>DATA.risk_off[t][k]?.start_price)));
+  const tickerNames=getTickerNames();
+  el.on.innerHTML=onKeys.map(k=>`<option value="${k}" ${k==="QQQ"?"selected":""}>${tickerNames[k]||k}</option>`).join("");
+  el.off.innerHTML=offKeys.map(k=>`<option value="${k}" ${k==="GC=F"?"selected":""}>${tickerNames[k]||k}</option>`).join("");
+}
+
+let currentTrades={benner:[],inverse:[]};
+let currentStrategy='benner';
+
+function compute(){
+  const bal=+el.bal.value,s=el.sy.value,e=el.ey.value,on=el.on.value,off=el.off.value;
+  const DATA=getDATA();
+  const ch=chunksBetween(s,e).map(x=>x.key);
+  let ben=bal,inv=bal,ho=bal,hf=bal;
+  
+  const bennerTrades=[];
+  const inverseTrades=[];
+  
+  for(const k of ch){
+    const mo=DATA.risk_on[on][k].period;
+    const ro=DATA.risk_on[on][k].end_price/DATA.risk_on[on][k].start_price;
+    const rf=(off==="USD")?1:(DATA.risk_off[off][k].end_price/DATA.risk_off[off][k].start_price);
+    
+    const chunk=CHUNKS.find(c=>c.key===k);
+    
+    // Benner Strategy
+    const benBefore=ben;
+    ben*=mo==="on"?ro:rf;
+    bennerTrades.push({
+      asset:mo==="on"?on:off,
+      regime:mo==="on"?"Risk-On":"Risk-Off",
+      buyDate:chunk.start,
+      sellDate:chunk.end,
+      buyPrice:mo==="on"?DATA.risk_on[on][k].start_price:(off==="USD"?1:DATA.risk_off[off][k].start_price),
+      sellPrice:mo==="on"?DATA.risk_on[on][k].end_price:(off==="USD"?1:DATA.risk_off[off][k].end_price),
+      balanceBefore:benBefore,
+      balanceAfter:ben
+    });
+    
+    // Inverse Strategy
+    const invBefore=inv;
+    inv*=mo==="on"?rf:ro;
+    inverseTrades.push({
+      asset:mo==="on"?off:on,
+      regime:mo==="on"?"Risk-Off":"Risk-On",
+      buyDate:chunk.start,
+      sellDate:chunk.end,
+      buyPrice:mo==="on"?(off==="USD"?1:DATA.risk_off[off][k].start_price):DATA.risk_on[on][k].start_price,
+      sellPrice:mo==="on"?(off==="USD"?1:DATA.risk_off[off][k].end_price):DATA.risk_on[on][k].end_price,
+      balanceBefore:invBefore,
+      balanceAfter:inv
+    });
+    
+    ho*=ro;hf*=rf;
+  }
+  
+  currentTrades={benner:bennerTrades,inverse:inverseTrades};
+  show(bal,ben,inv,ho,hf,on,off,s,e);
+  document.getElementById('trades-section').style.display='block';
+  showTrades(currentStrategy);
+}
+
+function show(b0,b,i,ho,hf,on,off,s,e){
+  el.ben.textContent=fmt(b);
+  el.inv.textContent=fmt(i);
+  el.hon.textContent=fmt(ho);
+  el.hof.textContent=fmt(hf);
+  
+  updateCard(el.benCard,el.benChange,b,b0);
+  updateCard(el.invCard,el.invChange,i,b0);
+  updateCard(el.honCard,el.honChange,ho,b0);
+  updateCard(el.hofCard,el.hofChange,hf,b0);
+  
+  const testText=currentLang==='tr'?'Test':'Test';
+  const periodText=currentLang==='tr'?'Dönem':'Period';
+  const todayText=currentLang==='tr'?'11.11.2025':'11.11.2025';
+  const tickerNames=getTickerNames();
+  el.meta.textContent=`📊 ${testText}: ${tickerNames[on]||on} / ${tickerNames[off]||off} | ${periodText}: ${s} → ${e==='11.11.2025'?todayText:e}`;
+}
+
+function switchStrategy(strategy){
+  currentStrategy=strategy;
+  document.querySelectorAll('.trade-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.getAttribute('data-strategy')===strategy);
+  });
+  showTrades(strategy);
+}
+
+function showTrades(strategy){
+  const trades=currentTrades[strategy];
+  const tickerNames=getTickerNames();
+  const container=document.getElementById('trades-list');
+  
+  if(!trades||trades.length===0){
+    container.innerHTML='<p style="text-align:center;color:var(--muted);">No trades available</p>';
+    return;
+  }
+  
+  const html=trades.map((trade,idx)=>{
+    const change=(trade.balanceAfter/trade.balanceBefore-1)*100;
+    const changeClass=change>0?'positive':change<0?'negative':'neutral';
+    const icon=change>0?'↗':change<0?'↘':'→';
+    
+    return `
+    <div class="trade-card">
+      <div class="trade-grid">
+        <div class="trade-item">
+          <div class="trade-label">${TRANSLATIONS[currentLang].asset}</div>
+          <div class="trade-value">${tickerNames[trade.asset]||trade.asset}</div>
+        </div>
+        <div class="trade-item">
+          <div class="trade-label">${TRANSLATIONS[currentLang].regime}</div>
+          <div class="trade-value">${trade.regime==='Risk-On'?TRANSLATIONS[currentLang].risk_on:TRANSLATIONS[currentLang].risk_off}</div>
+        </div>
+        <div class="trade-item">
+          <div class="trade-label">${TRANSLATIONS[currentLang].buy_date}</div>
+          <div class="trade-value">${trade.buyDate}</div>
+        </div>
+        <div class="trade-item">
+          <div class="trade-label">${TRANSLATIONS[currentLang].sell_date}</div>
+          <div class="trade-value">${trade.sellDate}</div>
+        </div>
+        <div class="trade-item">
+          <div class="trade-label">${TRANSLATIONS[currentLang].buy_price}</div>
+          <div class="trade-value">${trade.asset==='USD'?'$1.00':fmt(trade.buyPrice)}</div>
+        </div>
+        <div class="trade-item">
+          <div class="trade-label">${TRANSLATIONS[currentLang].sell_price}</div>
+          <div class="trade-value">${trade.asset==='USD'?'$1.00':fmt(trade.sellPrice)}</div>
+        </div>
+        <div class="trade-item">
+          <div class="trade-label">${TRANSLATIONS[currentLang].balance}</div>
+          <div class="trade-value">${fmt(trade.balanceAfter)}</div>
+        </div>
+        <div class="trade-item">
+          <div class="trade-label">${TRANSLATIONS[currentLang].change}</div>
+          <div class="trade-value ${changeClass}">${icon} ${change>0?'+':''}${change.toFixed(1)}%</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  
+  container.innerHTML=html;
+}
+
+rebuildEnd();
+rebuildAssets();
+el.sy.addEventListener("change",()=>{rebuildEnd();rebuildAssets();});
+el.ey.addEventListener("change",rebuildAssets);
+el.regime.addEventListener("change",rebuildAssets);
+document.getElementById("runBtn").addEventListener("click",compute);
+setLang('tr');
+</script>
+</body>
+</html>

@@ -113,11 +113,12 @@ select:hover{border-color:var(--grad2);}
 
 /* Responsive */
 @media(max-width:768px){
+  header{display:flex;flex-direction:column;gap:12px;padding:20px 16px;}
   h1{font-size:22px;}
+  .lang-switch{position:static;justify-content:center;}
   .param-grid{grid-template-columns:1fr;}
   .results-grid{grid-template-columns:1fr;}
   .kpi-value{font-size:20px;}
-  .lang-switch{top:auto;bottom:16px;}
   .trade-grid{grid-template-columns:1fr;}
   .trades-header{flex-direction:column;}
 }
